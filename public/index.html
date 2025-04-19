@@ -5,6 +5,8 @@
   <title>실시간 뉴스 모니터링</title>
   <script src="/socket.io/socket.io.js"></script>
   <link rel="stylesheet" href="./style.css">
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
 </head>
 <body>
   <h1>📰 '단독'+'국민의힘/국민의 힘' 포함 뉴스</h1>
@@ -42,8 +44,10 @@
     socket.on('newsUpdate', (articles) => {
       const uniqueTitles = new Set();
       tableBody.innerHTML = '';
+      console.log('📦 받은 전체 기사 수:', articles.length);
       articles.forEach((article, idx) => {
         if (uniqueTitles.has(article.title)) return;
+        console.log('📋 표시되는 기사:', article.title);
         uniqueTitles.add(article.title);
 
         const tr = document.createElement('tr');
