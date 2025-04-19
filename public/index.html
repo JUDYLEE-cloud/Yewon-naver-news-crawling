@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>실시간 뉴스 모니터링</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <h1>📰 '단독'+'국민의힘/국민의 힘' 포함 뉴스</h1>
+  <table id="newsTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>기사제목</th>
+        <th>언론사</th>
+        <th>크롤링 시간</th>
+        <th>확인</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const socket = io();
+    const tableBody = document.querySelector('#newsTable tbody');
+    let seen = {};
+
+    function getHostname(link) {
+      try {
+        const url = new URL(link);
+        return url.hostname.replace('www.', '');
+      } catch {
+        return '';
+      }
+    }
+
+    if (Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+
+    socket.on('newsUpdate', (articles) => {
+      const uniqueTitles = new Set();
+      tableBody.innerHTML = '';
+      articles.forEach((article, idx) => {
+        if (uniqueTitles.has(article.title)) return;
+        uniqueTitles.add(article.title);
+
+        const tr = document.createElement('tr');
+        const checked = seen[article.link] ? 'checked' : '';
+        const newsOrg = getHostname(article.link);
+
+        tr.innerHTML = `
+          <td>${idx + 1}</td>
+          <td><a href="${article.link}" target="_blank">${article.title}</a></td>
+          <td>${newsOrg}</td>
+          <td>${article.time}</td>
+          <td><input type="checkbox" ${checked} onchange="toggleSeen('${article.link}', this.checked)" /></td>
+        `;
+
+        if (!seen[article.link] && Notification.permission === "granted") {
+          new Notification("📰 새 기사 도착", {
+            body: article.title,
+            icon: "/favicon.ico"
+          });
+        }
+
+        tableBody.appendChild(tr);
+      });
+    });
+
+    function toggleSeen(link, isChecked) {
+      if (isChecked) {
+        seen[link] = true;
+      } else {
+        delete seen[link];
+      }
+    }
+  </script>
+</body>
+</html>
